@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Мой сайт</title>
+  <title>Викторина</title>
 
   <style>
     body {
-      font-family: Arial;
-      background: #111;
+      font-family: Arial, sans-serif;
+      background: #f19bdf;
       color: white;
       display: flex;
       justify-content: center;
@@ -17,32 +17,272 @@
       margin: 0;
     }
 
-    .card {
-      background: #1f1f1f;
-      padding: 40px;
+    .quiz-box {
+      background: #76bceb;
+      padding: 30px;
       border-radius: 20px;
+      width: 400px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h1 {
       text-align: center;
     }
 
-    button {
-      padding: 12px 20px;
+    .question {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .answers button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .answers button:hover {
+      transform: scale(1.03);
+    }
+
+    .correct {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .wrong {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .default {
+      background: #3498db;
+      color: white;
+    }
+
+    #next-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 12px;
+      background: #9b59b6;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #result {
+      text-align: center;
+      font-size: 24px;
     }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>Привет 👋</h1>
-  <p>Это мой первый Go сайт</p>
+<div class="quiz-box">
 
-  <button onclick="alert('Сайт работает!')">
-    Нажми меня
-  </button>
+  <h1> Вводный тест</h1>
+
+  <div id="quiz">
+    <div class="question" id="question"></div>
+
+    <div class="answers" id="answers"></div>
+
+    <button id="next-btn">Следующий вопрос</button>
+  </div>
+
+  <div id="result" style="display:none;"></div>
+
 </div>
+
+<script>
+
+const questions = [
+  {
+    question: "1. Что из этого является устройством ввода?",
+    answers: [
+      { text: "Монитор", correct: false },
+      { text: "Принтер", correct: false },
+      { text: "Клавиатура", correct: true },
+      { text: "Колонки", correct: false }
+    ]
+  },
+
+  {
+    question: "2. Для чего нужна мышка?",
+    answers: [
+      { text: "Смотреть видео", correct: false },
+      { text: "Управлять курсором", correct: true },
+      { text: "Печатать текст", correct: false },
+      { text: "Слушать музыку", correct: false }
+    ]
+  },
+
+  {
+    question: "3. Как называется кнопка для удаления буквы?",
+    answers: [
+      { text: "Enter", correct: false },
+      { text: "Shift", correct: false },
+      { text: "Backspace", correct: true },
+      { text: "Tab", correct: false }
+    ]
+  },
+  {
+    question: "4. Как называется кнопка для удаления буквы слева?",
+    answers: [
+      { text: "Смотреть обучающие видео", correct: false },
+      { text: " Сообщать незнакомцам пароль", correct: true },
+      { text: " Играть в игры", correct: false },
+      { text: "Искать информацию", correct: false }
+    ]
+  },
+  {
+    question: "5.  Что такое файл?",
+    answers: [
+      { text: "Компьютер", correct: false },
+      { text: "Папка", correct: false },
+      { text: "Документ или информация, сохранённая на компьютере", correct: true },
+      { text: "Интернет", correct: false }
+    ]
+  },
+  {
+    question: "6. Продолжи последовательность: 2, 4, 6, 8...",
+    answers: [
+      { text: "10", correct: true },
+      { text: "12", correct: false },
+      { text: "1", correct: false },
+      { text: "9", correct: false }
+    ]
+  },
+  {
+    question: "7. Что нужно сделать первым, чтобы нарисовать рисунок? ",
+    answers: [
+      { text: "Закрыть программу", correct: false },
+      { text: "Напечатать текст", correct: false },
+      { text: "Открыть программу для рисования", correct: true }
+    ]
+  },
+  {
+    question: "8. Найди лишнее: Монитор, клавиатура, мышь, холодильник",
+    answers: [
+      { text: "Монитор", correct: false },
+      { text: "клавиатура", correct: false },
+      { text: "мышь", correct: false },
+      { text: "холодильник", correct: true }
+    ]
+  },
+  {
+    question: "9.  Если робот выполняет команды: → → ↑ ←",
+    answers: [
+      { text: "Справа-сверху", correct: true },
+      { text: "Справа-снизу", correct: false },
+      { text: "Слева-сверху", correct: false },
+      { text: "На месте", correct: false }
+    ]
+  }
+
+];
+
+let currentQuestion = 0;
+let score = 0;
+
+const questionElement = document.getElementById("question");
+const answersElement = document.getElementById("answers");
+const nextBtn = document.getElementById("next-btn");
+const resultElement = document.getElementById("result");
+
+function showQuestion() {
+
+  resetState();
+
+  let q = questions[currentQuestion];
+
+  questionElement.innerText = q.question;
+
+  q.answers.forEach(answer => {
+
+    const button = document.createElement("button");
+
+    button.innerText = answer.text;
+
+    button.classList.add("default");
+
+    button.addEventListener("click", () => selectAnswer(button, answer.correct));
+
+    answersElement.appendChild(button);
+
+  });
+}
+
+function resetState() {
+  nextBtn.style.display = "none";
+  answersElement.innerHTML = "";
+}
+
+function selectAnswer(button, correct) {
+
+  const buttons = answersElement.children;
+
+  for (let btn of buttons) {
+    btn.disabled = true;
+  }
+
+  if (correct) {
+    button.classList.remove("default");
+    button.classList.add("correct");
+    score++;
+  } else {
+    button.classList.remove("default");
+    button.classList.add("wrong");
+  }
+
+  nextBtn.style.display = "block";
+}
+
+nextBtn.addEventListener("click", () => {
+
+  currentQuestion++;
+
+  if (currentQuestion < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+
+});
+
+function showResult() {
+
+  document.getElementById("quiz").style.display = "none";
+
+  resultElement.style.display = "block";
+
+  resultElement.innerHTML = `
+    🎉 Правильных ответов: ${score} из ${questions.length}
+    <br><br>
+    <button onclick="location.reload()"
+      style="
+        padding:12px 20px;
+        border:none;
+        border-radius:12px;
+        background:#3498db;
+        color:white;
+        cursor:pointer;
+      ">
+      Играть снова
+    </button>
+  `;
+}
+
+showQuestion();
+
+</script>
 
 </body>
 </html>
